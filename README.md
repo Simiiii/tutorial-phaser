@@ -6,6 +6,12 @@ Full source-code for the step-by-step tutorial on how to use Phaser + Colyseus t
 - [See step-by-step Tutorial](https://docs.colyseus.io/tutorial/phaser)
 - [See Colyseus documentation](https://docs.colyseus.io/)
 
+## How to run the **docker compose**
+
+```sh
+docker compose up --build
+```
+
 ## How to run the **server**
 
 - Download and install [Node.js LTS](https://nodejs.org/en/download/)
@@ -35,4 +41,4 @@ The client should be accessible at [`http://localhost:1234`](`http://localhost:1
 ## License
 
 - Source-code is licensed under MIT License.
-- The [assets](https://www.kenney.nl/assets/pixel-shmup) are licensed under [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/). 
+- The [assets](https://www.kenney.nl/assets/pixel-shmup) are licensed under [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/).

@@ -1,0 +1,26 @@
+services:
+  # Colyseus WebSocket game server
+  server:
+    build:
+      context: ./server
+    ports:
+      - "2567:2567"
+    environment:
+      NODE_ENV: production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:2567/hello"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Phaser client — static files served by nginx
+  client:
+    build:
+      context: ./client
+    ports:
+      - "80:80"
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: unless-stopped
