@@ -93,6 +93,8 @@ const DLG_Y = 390;
 const DLG_W = 760;
 const DLG_H = 195;
 
+const FONT = "'Segoe UI', Tahoma, Arial, sans-serif";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DialogOption = { text: string; onSelect: () => void };
 type QuizState = { questionIndex: number; quizDone: boolean; wrongFeedback: string | null };
@@ -117,7 +119,6 @@ export class LearnScene extends Phaser.Scene {
 
   // Dialog
   dialogContainer: Phaser.GameObjects.Container;
-  dlgBg: Phaser.GameObjects.Rectangle;
   dlgTitle: Phaser.GameObjects.Text;
   dlgMessage: Phaser.GameObjects.Text;
   dlgOptionObjects: Phaser.GameObjects.Container[] = [];
@@ -212,33 +213,23 @@ export class LearnScene extends Phaser.Scene {
   // ─── NPCs ──────────────────────────────────────────────────────────────────
 
   private createNPCs() {
-    // Fisher
-    this.fisherSprite = this.add.rectangle(FISHER_POS.x, FISHER_POS.y, 36, 36, 0x2255cc)
-      .setStrokeStyle(2, 0xffffff);
-    this.add.text(FISHER_POS.x, FISHER_POS.y - 28, "🎣 Fischerin",
-      { fontSize: "11px", color: "#ffffff", stroke: "#000000", strokeThickness: 3 })
-      .setOrigin(0.5);
+    const npcLabel = (x: number, y: number, text: string, color = "#ffffff") =>
+      this.add.text(x, y, text, { fontFamily: FONT, fontSize: "11px", color, stroke: "#000000", strokeThickness: 2 })
+        .setOrigin(0.5);
 
-    // Smith
-    this.smithSprite = this.add.rectangle(SMITH_POS.x, SMITH_POS.y, 36, 36, 0x888888)
-      .setStrokeStyle(2, 0xffffff);
-    this.add.text(SMITH_POS.x, SMITH_POS.y - 28, "⚒️ Schmied",
-      { fontSize: "11px", color: "#ffffff", stroke: "#000000", strokeThickness: 3 })
-      .setOrigin(0.5);
+    this.fisherSprite = this.add.rectangle(FISHER_POS.x, FISHER_POS.y, 36, 36, 0x2255cc).setStrokeStyle(1.5, 0xffffff);
+    npcLabel(FISHER_POS.x, FISHER_POS.y - 28, "🎣 Fischerin");
 
-    // Vault (password manager) — locked until mission 3 done
-    this.vaultSprite = this.add.rectangle(VAULT_POS.x, VAULT_POS.y, 40, 40, 0x6a0dad)
-      .setStrokeStyle(3, 0xffd700)
-      .setAlpha(0.4);
-    this.add.text(VAULT_POS.x, VAULT_POS.y - 30, "🔐 Tresor",
-      { fontSize: "11px", color: "#ffd700", stroke: "#000000", strokeThickness: 3 })
-      .setOrigin(0.5);
+    this.smithSprite = this.add.rectangle(SMITH_POS.x, SMITH_POS.y, 36, 36, 0x888888).setStrokeStyle(1.5, 0xffffff);
+    npcLabel(SMITH_POS.x, SMITH_POS.y - 28, "⚒️ Schmied");
 
-    // Interaction hint
-    this.hintText = this.add.text(MAP_W / 2, DLG_Y - 24, "LEERTASTE drücken um zu interagieren",
-      { fontSize: "13px", color: "#ffffaa", stroke: "#333300", strokeThickness: 3, backgroundColor: "#00000066", padding: { x: 6, y: 3 } })
-      .setOrigin(0.5)
-      .setVisible(false);
+    this.vaultSprite = this.add.rectangle(VAULT_POS.x, VAULT_POS.y, 40, 40, 0x6a0dad).setStrokeStyle(2, 0xffd700).setAlpha(0.4);
+    npcLabel(VAULT_POS.x, VAULT_POS.y - 30, "🔐 Tresor", "#ffd700");
+
+    this.hintText = this.add.text(MAP_W / 2, DLG_Y - 22, "LEERTASTE — interagieren",
+      { fontFamily: FONT, fontSize: "12px", color: "#ffffcc", stroke: "#222200", strokeThickness: 2,
+        backgroundColor: "#00000077", padding: { x: 8, y: 4 } })
+      .setOrigin(0.5).setVisible(false);
   }
 
   // ─── Collectibles ──────────────────────────────────────────────────────────
@@ -311,17 +302,19 @@ export class LearnScene extends Phaser.Scene {
   private createDialog() {
     this.dialogContainer = this.add.container(0, 0).setDepth(10).setVisible(false);
 
-    // Semi-transparent background
-    this.dlgBg = this.add.rectangle(DLG_X + DLG_W / 2, DLG_Y + DLG_H / 2, DLG_W, DLG_H, 0x0a1a3a, 0.93)
-      .setStrokeStyle(2, 0x4488ff);
+    const gfx = this.add.graphics();
+    gfx.fillStyle(0x0a1a3a, 0.96);
+    gfx.fillRoundedRect(DLG_X, DLG_Y, DLG_W, DLG_H, 10);
+    gfx.lineStyle(1, 0x3366cc, 1);
+    gfx.strokeRoundedRect(DLG_X, DLG_Y, DLG_W, DLG_H, 10);
 
-    this.dlgTitle = this.add.text(DLG_X + 12, DLG_Y + 10, "",
-      { fontSize: "14px", color: "#88ccff", fontStyle: "bold" });
+    this.dlgTitle = this.add.text(DLG_X + 14, DLG_Y + 12, "",
+      { fontFamily: FONT, fontSize: "14px", color: "#88ccff", fontStyle: "bold" });
 
-    this.dlgMessage = this.add.text(DLG_X + 12, DLG_Y + 32, "",
-      { fontSize: "13px", color: "#e0e0e0", wordWrap: { width: DLG_W - 24 } });
+    this.dlgMessage = this.add.text(DLG_X + 14, DLG_Y + 34, "",
+      { fontFamily: FONT, fontSize: "13px", color: "#d8d8d8", wordWrap: { width: DLG_W - 28 } });
 
-    this.dialogContainer.add([this.dlgBg, this.dlgTitle, this.dlgMessage]);
+    this.dialogContainer.add([gfx, this.dlgTitle, this.dlgMessage]);
   }
 
   showDialog(title: string, message: string, options: DialogOption[]) {
@@ -344,21 +337,28 @@ export class LearnScene extends Phaser.Scene {
       const bx = startX + i * (btnW + 8) + btnW / 2;
       const btnContainer = this.add.container(bx, btnY);
 
-      const btnBg = this.add.rectangle(0, 0, btnW, 36, 0x1a3a6a)
-        .setStrokeStyle(1, 0x4488ff)
+      const btnGfx = this.add.graphics();
+      const draw = (color: number) => {
+        btnGfx.clear();
+        btnGfx.fillStyle(color, 1);
+        btnGfx.fillRoundedRect(-btnW / 2, -18, btnW, 36, 6);
+        btnGfx.lineStyle(1, 0x4488ff, 0.7);
+        btnGfx.strokeRoundedRect(-btnW / 2, -18, btnW, 36, 6);
+      };
+      draw(0x1a3a6a);
+
+      const btnHit = this.add.rectangle(0, 0, btnW, 36)
+        .setAlpha(0.001)
         .setInteractive({ useHandCursor: true })
-        .on("pointerover",  () => btnBg.setFillStyle(0x2a5aaa))
-        .on("pointerout",   () => btnBg.setFillStyle(0x1a3a6a))
-        .on("pointerdown",  () => {
-          btnBg.setFillStyle(0x0a2a4a);
-          opt.onSelect();
-        });
+        .on("pointerover",  () => draw(0x2a5aaa))
+        .on("pointerout",   () => draw(0x1a3a6a))
+        .on("pointerdown",  () => { draw(0x0a2060); opt.onSelect(); });
 
       const btnText = this.add.text(0, 0, opt.text,
-        { fontSize: "12px", color: "#ffffff", wordWrap: { width: btnW - 8 }, align: "center" })
+        { fontFamily: FONT, fontSize: "12px", color: "#e8e8e8", wordWrap: { width: btnW - 10 }, align: "center" })
         .setOrigin(0.5);
 
-      btnContainer.add([btnBg, btnText]);
+      btnContainer.add([btnGfx, btnText, btnHit]);
       btnContainer.setDepth(11);
       this.dlgOptionObjects.push(btnContainer);
     });
@@ -376,19 +376,12 @@ export class LearnScene extends Phaser.Scene {
   // ─── HUD ───────────────────────────────────────────────────────────────────
 
   private createHUD() {
-    const hudStyle = { fontSize: "14px", color: "#ffffff", stroke: "#000000", strokeThickness: 3 };
+    const s = { fontFamily: FONT, fontSize: "13px", color: "#ffffff", stroke: "#000000", strokeThickness: 2 };
 
-    this.missionText = this.add.text(MAP_W - 10, 10, "Mission 1 / 3", hudStyle)
-      .setOrigin(1, 0).setDepth(5);
-
-    this.letterCountText = this.add.text(10, 10, "Buchstaben: 0", hudStyle)
-      .setDepth(5).setVisible(false);
-
-    this.specialCountText = this.add.text(10, 30, "Sonderzeichen: 0 / 3", hudStyle)
-      .setDepth(5).setVisible(false);
-
-    this.debugFPS = this.add.text(4, MAP_H - 18, "", { fontSize: "11px", color: "#ff0000" })
-      .setDepth(5);
+    this.missionText = this.add.text(MAP_W - 10, 10, "Mission 1 / 3", s).setOrigin(1, 0).setDepth(5);
+    this.letterCountText  = this.add.text(10, 10, "Buchstaben: 0", s).setDepth(5).setVisible(false);
+    this.specialCountText = this.add.text(10, 28, "Sonderzeichen: 0 / 3", s).setDepth(5).setVisible(false);
+    this.debugFPS = this.add.text(4, MAP_H - 18, "", { fontFamily: FONT, fontSize: "11px", color: "#ff0000" }).setDepth(5);
   }
 
   private updateHUD() {
@@ -467,11 +460,52 @@ export class LearnScene extends Phaser.Scene {
     }
   }
 
+  // ─── Celebration animation ─────────────────────────────────────────────────
+
+  private celebrateMission(level: number) {
+    // Brief white flash
+    const flash = this.add.rectangle(MAP_W / 2, MAP_H / 2, MAP_W, MAP_H, 0xffffff, 0.55).setDepth(60);
+    this.tweens.add({ targets: flash, alpha: 0, duration: 350, onComplete: () => flash.destroy() });
+
+    // Camera shake — intensity grows with level
+    this.cameras.main.shake(200 + level * 60, 0.003 * level);
+
+    // Particle burst — colored squares radiate from center
+    const palette = [0xffd700, 0xff6b6b, 0x4ecdc4, 0xa8e6cf, 0xffeaa7, 0xc7b3ff];
+    const count = 6 + level * 5;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + Phaser.Math.FloatBetween(-0.2, 0.2);
+      const dist  = 60 + Phaser.Math.Between(20, 80);
+      const cx = MAP_W / 2, cy = MAP_H / 2 - 40;
+      const p = this.add.rectangle(cx, cy, 7, 7, palette[i % palette.length]).setDepth(58);
+      this.tweens.add({
+        targets: p,
+        x: cx + Math.cos(angle) * dist,
+        y: cy + Math.sin(angle) * dist,
+        alpha: 0, scaleX: 0.1, scaleY: 0.1,
+        duration: 450 + Phaser.Math.Between(0, 350),
+        ease: 'Cubic.easeOut',
+        delay: Phaser.Math.Between(0, 80),
+        onComplete: () => p.destroy(),
+      });
+    }
+
+    // Pop-in celebration label
+    const msgs = ['⭐ Klasse!', '🌟 Weiter so!', '🎉 Gewonnen!'];
+    const boom = this.add.text(MAP_W / 2, MAP_H / 2 - 60, msgs[level - 1] ?? '🎉',
+      { fontFamily: FONT, fontSize: `${18 + level * 4}px`, color: '#ffd700',
+        stroke: '#7a4000', strokeThickness: 2, fontStyle: 'bold' })
+      .setOrigin(0.5).setDepth(59).setScale(0.2);
+    this.tweens.add({ targets: boom, scaleX: 1, scaleY: 1, duration: 320, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: boom, alpha: 0, delay: 1100, duration: 350, onComplete: () => boom.destroy() });
+  }
+
   private completeMission1() {
     this.mission1Done = true;
     this.currentMission = 2;
-    this.room?.send(1); // tell server
+    this.room?.send(1);
     this.updateHUD();
+    this.celebrateMission(1);
     this.showDialog(
       "🎉 Mission 1 abgeschlossen!",
       "Super gemacht! Du kennst jetzt die Grundlagen sicherer Passwörter.\nJetzt: sammle 20 Zeichen (mindestens 3 Sonderzeichen) im Spielfeld!",
@@ -517,6 +551,7 @@ export class LearnScene extends Phaser.Scene {
     this.room?.send(1);
     this.updateHUD();
     this.vaultSprite.setAlpha(1);
+    this.celebrateMission(2);
     this.showDialog(
       "🎉 Mission 2 abgeschlossen!",
       `Du hast ${this.lettersCollected + this.specialsCollected} Zeichen gesammelt (${this.specialsCollected} Sonderzeichen)!\nGeh jetzt zum Schmied – er wartet auf dich.`,
@@ -547,6 +582,7 @@ export class LearnScene extends Phaser.Scene {
   }
 
   private showPasswordManagerDialog() {
+    this.celebrateMission(3);
     this.showDialog(
       "🔐 Passwortmanager freigeschaltet!",
       "Ein Passwortmanager ist wie ein geheimer Tresor für alle deine Passwörter.\nDu brauchst dir nur ein starkes Masterpasswort zu merken – den Rest erledigt er!\n\n🎉 Du hast alle Missionen abgeschlossen!",
@@ -585,7 +621,7 @@ export class LearnScene extends Phaser.Scene {
     callbacks.onAdd("players", (player: LearnPlayer, sessionId: string) => {
       const rect  = this.add.rectangle(player.x, player.y, 24, 24, 0xff4444).setDepth(3);
       const label = this.add.text(player.x, player.y - 18, "Du",
-        { fontSize: "10px", color: "#ffffff", stroke: "#000", strokeThickness: 2 })
+        { fontFamily: FONT, fontSize: "10px", color: "#ffffff", stroke: "#000", strokeThickness: 1 })
         .setDepth(4).setOrigin(0.5);
 
       this.playerEntities[sessionId] = { rect, label };
