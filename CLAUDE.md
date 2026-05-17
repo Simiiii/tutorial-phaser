@@ -21,6 +21,23 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml watch
 
 ## Architecture
 
+### Infrastructure
+- **Source control**: GitHub (code repository)
+- **Container registry**: GitHub Container Registry (GHCR) — images are built and pushed here
+- **Hosting**: Azure Container Apps — pulls images from GHCR and runs the containers
+
+### CI/CD pipeline
+Workflow: `.github/workflows/build-push.yml` — triggers on push to `main`.
+
+| Step | Detail |
+|------|--------|
+| Auth | `GITHUB_TOKEN` (no secrets to configure) |
+| Build | `server` and `client` built in parallel via job matrix |
+| Target | `production` stage of each multi-stage Dockerfile |
+| Tags | `latest` (default branch) + short SHA on every push |
+| Image names | `ghcr.io/<owner>/<repo>-server` / `ghcr.io/<owner>/<repo>-client` |
+| Cache | GitHub Actions cache scoped per service |
+
 ### Tutorial progression (Parts 1–4)
 Each part adds a feature layer. The same pattern repeats: a `PartNRoom.ts` on the server and a `PartNScene.ts` on the client.
 
@@ -57,3 +74,10 @@ This gives end-to-end type safety without a shared package — changes to server
 
 ### Known issue in tests
 `server/test/MyRoom_test.ts` references `../src/arena.config` (old template name) — this import will fail. The actual config file is `src/app.config.ts`.
+
+## Git conventions
+
+Commit messages: single subject line, no body, always end with:
+```
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+```
