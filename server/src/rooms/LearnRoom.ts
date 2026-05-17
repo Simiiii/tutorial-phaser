@@ -38,7 +38,7 @@ export class LearnRoom extends Room {
     // Client collected a letter/symbol
     2: (client: Client) => {
       const player = this.state.players.get(client.sessionId);
-      if (player && player.lettersCollected < 20) {
+      if (player && player.lettersCollected < 26) {
         player.lettersCollected++;
       }
     },

@@ -2,7 +2,7 @@
  * LearnScene — Cybersecurity education game for kids.
  * Three missions:
  *   1. Fisher Quiz   — answer 3 password-security questions
- *   2. Collect Items — pick up 20 letters/symbols in the field
+ *   2. Collect Items — pick up all 26 alphabet letters in the field
  *   3. Smith Gate    — talk to the smith to unlock the password manager
  */
 
@@ -48,19 +48,21 @@ const QUIZ = [
   },
 ];
 
-// Letters/special-chars to collect (20 items)
-const COLLECTIBLE_CHARS = [
-  "A","B","C","D","E","F","G","H","I","J",
-  "!","@","#","$","%","&","*","?","+","="
-];
+// All 26 alphabet letters — row 0 (frames 0–25) = small, row 1 (frames 26–51) = capitals
+// Frame index maps directly: 'a'=0 … 'z'=25, 'A'=26 … 'Z'=51
+const LETTER_FRAME_SMALL   = (i: number) => i;       // 0–25
+const LETTER_FRAME_CAPITAL = (i: number) => 26 + i;  // 26–51
+const TOTAL_FRAMES = 52;
 
-// Spread collectibles across the field (avoid lake area)
+// Initial spread of 26 positions across the field (avoiding lake bottom-left)
 const COLLECTIBLE_POSITIONS: {x: number; y: number}[] = [
-  {x:80,  y:80},  {x:180, y:60},  {x:300, y:90},  {x:420, y:70},
-  {x:540, y:80},  {x:660, y:60},  {x:740, y:110}, {x:120, y:170},
-  {x:240, y:190}, {x:360, y:160}, {x:480, y:180}, {x:600, y:170},
-  {x:730, y:200}, {x:80,  y:270}, {x:200, y:260}, {x:340, y:280},
-  {x:460, y:250}, {x:580, y:270}, {x:700, y:260}, {x:760, y:320},
+  {x: 55, y: 55},  {x:130, y: 55},  {x:215, y: 55},  {x:305, y: 55},
+  {x:395, y: 55},  {x:490, y: 55},  {x:680, y: 55},
+  {x: 80, y:125},  {x:170, y:125},  {x:265, y:125},  {x:365, y:125},
+  {x:460, y:125},  {x:555, y:125},  {x:645, y:125},  {x:745, y:125},
+  {x: 55, y:200},  {x:150, y:200},  {x:255, y:200},  {x:365, y:200},
+  {x:475, y:200},  {x:590, y:200},  {x:720, y:200},
+  {x:365, y:295},  {x:455, y:295},  {x:545, y:295},  {x:640, y:295},
 ];
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -100,8 +102,8 @@ export class LearnScene extends Phaser.Scene {
   vaultSprite:  Phaser.GameObjects.Rectangle;
   hintText: Phaser.GameObjects.Text;
 
-  // Collectibles
-  collectibles: { obj: Phaser.GameObjects.Container; char: string; collected: boolean }[] = [];
+  // Collectibles — image sprites from the letter spritesheet
+  collectibles: { obj: Phaser.GameObjects.Image; frame: number; collected: boolean }[] = [];
 
   // Dialog
   dialogContainer: Phaser.GameObjects.Container;
@@ -139,8 +141,11 @@ export class LearnScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("collectibles_letters", "/assets/collectibles/powerup_cellsheet.png");
-    this.load.image("collectibles_numbers", "/assets/collectibles/powerup_cellsheet_numbers.png");
+    // 26 cols × 2 rows (row 0 = a–z, row 1 = A–Z), each frame 170×165 px
+    this.load.spritesheet("letters", "/assets/collectibles/powerup_cellsheet.png", {
+      frameWidth: 170,
+      frameHeight: 165,
+    });
   }
 
   async create() {
@@ -228,28 +233,39 @@ export class LearnScene extends Phaser.Scene {
 
   private createCollectibles() {
     COLLECTIBLE_POSITIONS.forEach((pos, i) => {
-      const char = COLLECTIBLE_CHARS[i % COLLECTIBLE_CHARS.length];
-      const container = this.add.container(pos.x, pos.y);
-
-      const bg = this.add.rectangle(0, 0, 28, 28, 0x22cc44).setStrokeStyle(2, 0xffffff);
-      const label = this.add.text(0, 0, char,
-        { fontSize: "14px", color: "#ffffff", fontStyle: "bold", stroke: "#006622", strokeThickness: 2 })
-        .setOrigin(0.5);
-
-      container.add([bg, label]);
-
-      // Floating animation
-      this.tweens.add({
-        targets: container,
-        y: pos.y - 5,
-        duration: 800 + i * 60,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
-      });
-
-      this.collectibles.push({ obj: container, char, collected: false });
+      // Alternate between small (0–25) and capital (26–51) letters for variety
+      const frame = i < 26 ? LETTER_FRAME_SMALL(i) : LETTER_FRAME_CAPITAL(i - 26);
+      this.spawnLetter(pos.x, pos.y, frame);
     });
+  }
+
+  private spawnLetter(x: number, y: number, frame: number) {
+    const img = this.add.image(x, y, "letters", frame)
+      .setDisplaySize(32, 32)
+      .setDepth(2);
+
+    this.tweens.add({
+      targets: img,
+      y: y - 6,
+      duration: 750 + Phaser.Math.Between(0, 300),
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    this.collectibles.push({ obj: img, frame, collected: false });
+  }
+
+  private spawnRandomLetter() {
+    // Pick a random field position (avoid lake area: x<330, y>410)
+    let x: number, y: number;
+    do {
+      x = Phaser.Math.Between(40, MAP_W - 40);
+      y = Phaser.Math.Between(40, 360);
+    } while (x < 330 && y > 330);
+
+    const frame = Phaser.Math.Between(0, TOTAL_FRAMES - 1);
+    this.spawnLetter(x, y, frame);
   }
 
   // ─── Dialog system ─────────────────────────────────────────────────────────
@@ -327,7 +343,7 @@ export class LearnScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setDepth(5);
 
-    this.letterCountText = this.add.text(10, 10, "Buchstaben: 0 / 20",
+    this.letterCountText = this.add.text(10, 10, "Buchstaben: 0 / 26",
       { fontSize: "14px", color: "#ffffff", stroke: "#000000", strokeThickness: 3 })
       .setDepth(5)
       .setVisible(false);
@@ -338,7 +354,7 @@ export class LearnScene extends Phaser.Scene {
 
   private updateHUD() {
     this.missionText.setText(`Mission ${this.currentMission} / 3`);
-    this.letterCountText.setText(`Buchstaben: ${this.lettersCollected} / 20`);
+    this.letterCountText.setText(`Buchstaben: ${this.lettersCollected} / 26`);
     this.letterCountText.setVisible(this.currentMission === 2);
   }
 
@@ -354,7 +370,7 @@ export class LearnScene extends Phaser.Scene {
     } else if (mission === 2) {
       this.showDialog(
         "Mission 2: Die Schmiede der Zeichen ⚒️",
-        "Überall auf dem Spielfeld leuchten Items – Buchstaben und Sonderzeichen.\nSammle 20 davon, um dein Masterpasswort zu bauen!",
+        "Überall auf dem Spielfeld leuchten Buchstaben des Alphabets.\nSammle alle 26, um dein Masterpasswort zu bauen! Neue Buchstaben erscheinen, wenn du welche sammelst.",
         [{ text: "Sammeln!", onSelect: () => this.hideDialog() }]
       );
     } else if (mission === 3) {
@@ -415,13 +431,11 @@ export class LearnScene extends Phaser.Scene {
     this.updateHUD();
     this.showDialog(
       "🎉 Mission 1 abgeschlossen!",
-      "Super gemacht! Du kennst jetzt die Grundlagen sicherer Passwörter.\nJetzt: sammle 20 Zeichen im Spielfeld!",
+      "Super gemacht! Du kennst jetzt die Grundlagen sicherer Passwörter.\nJetzt: sammle alle 26 Buchstaben im Spielfeld!",
       [{ text: "Weiter!", onSelect: () => { this.hideDialog(); this.showMissionIntro(2); } }]
     );
-    // Make collectibles glow
-    this.collectibles.forEach(c => {
-      (c.obj.list[0] as Phaser.GameObjects.Rectangle).setFillStyle(0x00ff66);
-    });
+    // Tint collectibles green to signal they are now active
+    this.collectibles.forEach(c => c.obj.setTint(0x00ff88));
   }
 
   private tryCollect() {
@@ -435,13 +449,17 @@ export class LearnScene extends Phaser.Scene {
       const dy = item.obj.y - py;
       if (Math.sqrt(dx * dx + dy * dy) < 22) {
         item.collected = true;
-        item.obj.setVisible(false);
+        this.tweens.killTweensOf(item.obj);
+        item.obj.destroy();
         this.lettersCollected++;
         this.room?.send(2);
         this.updateHUD();
 
-        if (this.lettersCollected >= 20) {
+        if (this.lettersCollected >= 26) {
           this.completeMission2();
+        } else {
+          // Spawn a replacement so the field stays populated
+          this.spawnRandomLetter();
         }
       }
     });
@@ -461,10 +479,10 @@ export class LearnScene extends Phaser.Scene {
 
   private interactWithSmith() {
     if (this.currentMission !== 3 || this.mission3Done) return;
-    if (this.lettersCollected < 20) {
+    if (this.lettersCollected < 26) {
       this.showDialog(
         "⚒️ Schmied",
-        `Du hast erst ${this.lettersCollected} / 20 Zeichen gesammelt.\nSammle erst alle 20, dann kannst du weitermachen!`,
+        `Du hast erst ${this.lettersCollected} / 26 Buchstaben gesammelt.\nSammle erst alle 26, dann kannst du weitermachen!`,
         [{ text: "Ok!", onSelect: () => this.hideDialog() }]
       );
       return;
