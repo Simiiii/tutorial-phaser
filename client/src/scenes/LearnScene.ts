@@ -48,22 +48,33 @@ const QUIZ = [
   },
 ];
 
-// All 26 alphabet letters — row 0 (frames 0–25) = small, row 1 (frames 26–51) = capitals
-// Frame index maps directly: 'a'=0 … 'z'=25, 'A'=26 … 'Z'=51
-const LETTER_FRAME_SMALL   = (i: number) => i;       // 0–25
-const LETTER_FRAME_CAPITAL = (i: number) => 26 + i;  // 26–51
-const TOTAL_FRAMES = 52;
+// powerup_cellsheet.png: 26 cols × 2 rows, each frame 170×165 px
+// row 0 frames 0–25 = a–z, row 1 frames 26–51 = A–Z
+const TOTAL_LETTER_FRAMES = 52;
 
-// Initial spread of 26 positions across the field (avoiding lake bottom-left)
-const COLLECTIBLE_POSITIONS: {x: number; y: number}[] = [
+// Special characters displayed as colored tiles (no tileset available)
+const SPECIAL_CHARS = ['!', '@', '#', '$', '%', '&', '*', '?'];
+
+// Initial 26 positions across the field (avoiding lake bottom-left).
+// First 22 → letters, last 4 → special characters.
+const COLLECTIBLE_POSITIONS: { x: number; y: number }[] = [
   {x: 55, y: 55},  {x:130, y: 55},  {x:215, y: 55},  {x:305, y: 55},
   {x:395, y: 55},  {x:490, y: 55},  {x:680, y: 55},
   {x: 80, y:125},  {x:170, y:125},  {x:265, y:125},  {x:365, y:125},
   {x:460, y:125},  {x:555, y:125},  {x:645, y:125},  {x:745, y:125},
   {x: 55, y:200},  {x:150, y:200},  {x:255, y:200},  {x:365, y:200},
   {x:475, y:200},  {x:590, y:200},  {x:720, y:200},
+  // specials (last 4)
   {x:365, y:295},  {x:455, y:295},  {x:545, y:295},  {x:640, y:295},
 ];
+
+// ─── Collectible type ─────────────────────────────────────────────────────────
+type CollectibleType = 'letter' | 'special';
+type Collectible = {
+  obj: Phaser.GameObjects.Image | Phaser.GameObjects.Container;
+  kind: CollectibleType;
+  collected: boolean;
+};
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const MAP_W = 800;
@@ -102,8 +113,7 @@ export class LearnScene extends Phaser.Scene {
   vaultSprite:  Phaser.GameObjects.Rectangle;
   hintText: Phaser.GameObjects.Text;
 
-  // Collectibles — image sprites from the letter spritesheet
-  collectibles: { obj: Phaser.GameObjects.Image; frame: number; collected: boolean }[] = [];
+  collectibles: Collectible[] = [];
 
   // Dialog
   dialogContainer: Phaser.GameObjects.Container;
@@ -116,6 +126,7 @@ export class LearnScene extends Phaser.Scene {
   // UI
   missionText: Phaser.GameObjects.Text;
   letterCountText: Phaser.GameObjects.Text;
+  specialCountText: Phaser.GameObjects.Text;
   debugFPS: Phaser.GameObjects.Text;
 
   // Input
@@ -130,6 +141,7 @@ export class LearnScene extends Phaser.Scene {
   // Mission / quiz state (client-side)
   currentMission = 1;
   lettersCollected = 0;
+  specialsCollected = 0;
   quizState: QuizState = { questionIndex: 0, quizDone: false, wrongFeedback: null };
   mission1Done = false;
   mission3Done = false;
@@ -233,9 +245,13 @@ export class LearnScene extends Phaser.Scene {
 
   private createCollectibles() {
     COLLECTIBLE_POSITIONS.forEach((pos, i) => {
-      // Alternate between small (0–25) and capital (26–51) letters for variety
-      const frame = i < 26 ? LETTER_FRAME_SMALL(i) : LETTER_FRAME_CAPITAL(i - 26);
-      this.spawnLetter(pos.x, pos.y, frame);
+      if (i < 22) {
+        const frame = i % TOTAL_LETTER_FRAMES;
+        this.spawnLetter(pos.x, pos.y, frame);
+      } else {
+        const char = SPECIAL_CHARS[(i - 22) % SPECIAL_CHARS.length];
+        this.spawnSpecial(pos.x, pos.y, char);
+      }
     });
   }
 
@@ -253,19 +269,41 @@ export class LearnScene extends Phaser.Scene {
       ease: "Sine.easeInOut",
     });
 
-    this.collectibles.push({ obj: img, frame, collected: false });
+    this.collectibles.push({ obj: img, kind: 'letter', collected: false });
   }
 
-  private spawnRandomLetter() {
-    // Pick a random field position (avoid lake area: x<330, y>410)
+  private spawnSpecial(x: number, y: number, char: string) {
+    const container = this.add.container(x, y).setDepth(2);
+    const bg = this.add.rectangle(0, 0, 32, 32, 0xf59e0b).setStrokeStyle(2, 0xffffff);
+    const label = this.add.text(0, 0, char,
+      { fontSize: "16px", color: "#1a1a1a", fontStyle: "bold" }).setOrigin(0.5);
+    container.add([bg, label]);
+
+    this.tweens.add({
+      targets: container,
+      y: y - 6,
+      duration: 750 + Phaser.Math.Between(0, 300),
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    this.collectibles.push({ obj: container, kind: 'special', collected: false });
+  }
+
+  private spawnRandomItem() {
     let x: number, y: number;
     do {
       x = Phaser.Math.Between(40, MAP_W - 40);
       y = Phaser.Math.Between(40, 360);
     } while (x < 330 && y > 330);
 
-    const frame = Phaser.Math.Between(0, TOTAL_FRAMES - 1);
-    this.spawnLetter(x, y, frame);
+    if (Phaser.Math.Between(0, 3) === 0) {
+      const char = SPECIAL_CHARS[Phaser.Math.Between(0, SPECIAL_CHARS.length - 1)];
+      this.spawnSpecial(x, y, char);
+    } else {
+      this.spawnLetter(x, y, Phaser.Math.Between(0, TOTAL_LETTER_FRAMES - 1));
+    }
   }
 
   // ─── Dialog system ─────────────────────────────────────────────────────────
@@ -338,24 +376,29 @@ export class LearnScene extends Phaser.Scene {
   // ─── HUD ───────────────────────────────────────────────────────────────────
 
   private createHUD() {
-    this.missionText = this.add.text(MAP_W - 10, 10, "Mission 1 / 3",
-      { fontSize: "14px", color: "#ffffff", stroke: "#000000", strokeThickness: 3 })
-      .setOrigin(1, 0)
+    const hudStyle = { fontSize: "14px", color: "#ffffff", stroke: "#000000", strokeThickness: 3 };
+
+    this.missionText = this.add.text(MAP_W - 10, 10, "Mission 1 / 3", hudStyle)
+      .setOrigin(1, 0).setDepth(5);
+
+    this.letterCountText = this.add.text(10, 10, "Buchstaben: 0", hudStyle)
+      .setDepth(5).setVisible(false);
+
+    this.specialCountText = this.add.text(10, 30, "Sonderzeichen: 0 / 3", hudStyle)
+      .setDepth(5).setVisible(false);
+
+    this.debugFPS = this.add.text(4, MAP_H - 18, "", { fontSize: "11px", color: "#ff0000" })
       .setDepth(5);
-
-    this.letterCountText = this.add.text(10, 10, "Buchstaben: 0 / 26",
-      { fontSize: "14px", color: "#ffffff", stroke: "#000000", strokeThickness: 3 })
-      .setDepth(5)
-      .setVisible(false);
-
-    this.debugFPS = this.add.text(4, MAP_H - 18, "",
-      { fontSize: "11px", color: "#ff0000" }).setDepth(5);
   }
 
   private updateHUD() {
+    const total = this.lettersCollected + this.specialsCollected;
     this.missionText.setText(`Mission ${this.currentMission} / 3`);
-    this.letterCountText.setText(`Buchstaben: ${this.lettersCollected} / 26`);
-    this.letterCountText.setVisible(this.currentMission === 2);
+    this.letterCountText.setText(`Buchstaben: ${this.lettersCollected}  |  Gesamt: ${total} / 20`);
+    this.specialCountText.setText(`Sonderzeichen: ${this.specialsCollected} / 3`);
+    const m2 = this.currentMission === 2;
+    this.letterCountText.setVisible(m2);
+    this.specialCountText.setVisible(m2);
   }
 
   // ─── Mission intro dialogs ──────────────────────────────────────────────────
@@ -370,7 +413,7 @@ export class LearnScene extends Phaser.Scene {
     } else if (mission === 2) {
       this.showDialog(
         "Mission 2: Die Schmiede der Zeichen ⚒️",
-        "Überall auf dem Spielfeld leuchten Buchstaben des Alphabets.\nSammle alle 26, um dein Masterpasswort zu bauen! Neue Buchstaben erscheinen, wenn du welche sammelst.",
+        "Sammle 20 Zeichen – darunter mindestens 3 Sonderzeichen (!@#...).\nBuchstaben kommen aus dem Tileset, Sonderzeichen sind orange. Neue Zeichen erscheinen beim Sammeln.",
         [{ text: "Sammeln!", onSelect: () => this.hideDialog() }]
       );
     } else if (mission === 3) {
@@ -431,7 +474,7 @@ export class LearnScene extends Phaser.Scene {
     this.updateHUD();
     this.showDialog(
       "🎉 Mission 1 abgeschlossen!",
-      "Super gemacht! Du kennst jetzt die Grundlagen sicherer Passwörter.\nJetzt: sammle alle 26 Buchstaben im Spielfeld!",
+      "Super gemacht! Du kennst jetzt die Grundlagen sicherer Passwörter.\nJetzt: sammle 20 Zeichen (mindestens 3 Sonderzeichen) im Spielfeld!",
       [{ text: "Weiter!", onSelect: () => { this.hideDialog(); this.showMissionIntro(2); } }]
     );
   }
@@ -449,15 +492,21 @@ export class LearnScene extends Phaser.Scene {
         item.collected = true;
         this.tweens.killTweensOf(item.obj);
         item.obj.destroy();
-        this.lettersCollected++;
-        this.room?.send(2);
+
+        if (item.kind === 'special') {
+          this.specialsCollected++;
+          this.room?.send(3);
+        } else {
+          this.lettersCollected++;
+          this.room?.send(2);
+        }
         this.updateHUD();
 
-        if (this.lettersCollected >= 26) {
+        const total = this.lettersCollected + this.specialsCollected;
+        if (total >= 20 && this.specialsCollected >= 3) {
           this.completeMission2();
         } else {
-          // Spawn a replacement so the field stays populated
-          this.spawnRandomLetter();
+          this.spawnRandomItem();
         }
       }
     });
@@ -470,17 +519,21 @@ export class LearnScene extends Phaser.Scene {
     this.vaultSprite.setAlpha(1);
     this.showDialog(
       "🎉 Mission 2 abgeschlossen!",
-      `Du hast ${this.lettersCollected} Zeichen gesammelt!\nGeh jetzt zum Schmied – er wartet auf dich.`,
+      `Du hast ${this.lettersCollected + this.specialsCollected} Zeichen gesammelt (${this.specialsCollected} Sonderzeichen)!\nGeh jetzt zum Schmied – er wartet auf dich.`,
       [{ text: "Zum Schmied!", onSelect: () => { this.hideDialog(); this.showMissionIntro(3); } }]
     );
   }
 
   private interactWithSmith() {
     if (this.currentMission !== 3 || this.mission3Done) return;
-    if (this.lettersCollected < 26) {
+    const total = this.lettersCollected + this.specialsCollected;
+    if (total < 20 || this.specialsCollected < 3) {
+      const missing = [];
+      if (total < 20) missing.push(`${20 - total} Zeichen fehlen noch`);
+      if (this.specialsCollected < 3) missing.push(`${3 - this.specialsCollected} Sonderzeichen fehlen noch`);
       this.showDialog(
         "⚒️ Schmied",
-        `Du hast erst ${this.lettersCollected} / 26 Buchstaben gesammelt.\nSammle erst alle 26, dann kannst du weitermachen!`,
+        `Dein Passwort ist noch nicht stark genug!\n${missing.join(' · ')}`,
         [{ text: "Ok!", onSelect: () => this.hideDialog() }]
       );
       return;

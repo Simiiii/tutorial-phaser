@@ -8,6 +8,7 @@ export class LearnPlayer extends Schema {
   @type("number") tick: number;
   @type("number") currentMission: number = 1;
   @type("number") lettersCollected: number = 0;
+  @type("number") specialsCollected: number = 0;
   inputQueue: InputData[] = [];
 }
 
@@ -35,12 +36,15 @@ export class LearnRoom extends Room {
         player.currentMission++;
       }
     },
-    // Client collected a letter/symbol
+    // Client collected a letter
     2: (client: Client) => {
       const player = this.state.players.get(client.sessionId);
-      if (player && player.lettersCollected < 26) {
-        player.lettersCollected++;
-      }
+      if (player) player.lettersCollected++;
+    },
+    // Client collected a special character
+    3: (client: Client) => {
+      const player = this.state.players.get(client.sessionId);
+      if (player) player.specialsCollected++;
     },
   }
 
