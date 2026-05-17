@@ -7,6 +7,7 @@ import { Part1Room } from "./rooms/Part1Room";
 import { Part2Room } from "./rooms/Part2Room";
 import { Part3Room } from "./rooms/Part3Room";
 import { Part4Room } from "./rooms/Part4Room";
+import { LearnRoom } from "./rooms/LearnRoom";
 
 const server = defineServer({
     rooms: {
@@ -14,6 +15,7 @@ const server = defineServer({
         part2_room: defineRoom(Part2Room),
         part3_room: defineRoom(Part3Room),
         part4_room: defineRoom(Part4Room),
+        learn_room: defineRoom(LearnRoom),
     },
 
     express: (app) => {

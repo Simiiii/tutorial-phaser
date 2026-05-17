@@ -7,6 +7,7 @@ export class SceneSelector extends Phaser.Scene {
         '2': "Interpolation",
         '3': "Client-predicted Input",
         '4': "Fixed Tickrate",
+        'learn': "🎮 Learn: Cybersecurity",
     };
 
     constructor() {
@@ -36,16 +37,18 @@ export class SceneSelector extends Phaser.Scene {
             fontFamily: "Arial"
         };
 
-        for (let partNum in this.parts) {
-            const index = parseInt(partNum) - 1;
+        const keys = Object.keys(this.parts);
+        for (let i = 0; i < keys.length; i++) {
+            const partNum = keys[i];
             const label = this.parts[partNum];
+            const sceneKey = isNaN(parseInt(partNum)) ? partNum : `part${partNum}`;
+            const displayName = isNaN(parseInt(partNum)) ? label : `Part ${partNum}: ${label}`;
 
-            // this.add.text(32, 32 + 32 * index, `Part ${partNum}: ${label}`, textStyle)
-            this.add.text(130, 150 + 70 * index, `Part ${partNum}: ${label}`, textStyle)
+            this.add.text(130, 150 + 70 * i, displayName, textStyle)
                 .setInteractive()
                 .setPadding(6)
                 .on("pointerdown", () => {
-                    this.runScene(`part${partNum}`);
+                    this.runScene(sceneKey);
                 });
         }
     }

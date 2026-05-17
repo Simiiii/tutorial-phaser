@@ -5,6 +5,7 @@ import { Part1Scene } from "./scenes/Part1Scene";
 import { Part2Scene } from "./scenes/Part2Scene";
 import { Part3Scene } from "./scenes/Part3Scene";
 import { Part4Scene } from "./scenes/Part4Scene";
+import { LearnScene } from "./scenes/LearnScene";
 
 const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
@@ -22,7 +23,7 @@ const config: Phaser.Types.Core.GameConfig = {
         default: "arcade"
     },
     pixelArt: true,
-    scene: [SceneSelector, Part1Scene, Part2Scene, Part3Scene, Part4Scene],
+    scene: [SceneSelector, Part1Scene, Part2Scene, Part3Scene, Part4Scene, LearnScene],
 };
 
 const game = new Phaser.Game(config);
