@@ -139,12 +139,8 @@ export class LearnScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("ship_0001",
-      "https://cdn.glitch.global/3e033dcd-d5be-4db4-99e8-086ae90969ec/ship_0001.png?v=1649945243288"
-    );
-    // collectibles tilesheets (for future visual upgrade)
-    this.load.image("collectibles_letters",  "/assets/collectibles/powerup_cellsheet.png");
-    this.load.image("collectibles_numbers",  "/assets/collectibles/powerup_cellsheet_numbers.png");
+    this.load.image("collectibles_letters", "/assets/collectibles/powerup_cellsheet.png");
+    this.load.image("collectibles_numbers", "/assets/collectibles/powerup_cellsheet_numbers.png");
   }
 
   async create() {
