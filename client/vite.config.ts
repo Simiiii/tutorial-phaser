@@ -2,7 +2,8 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   server: {
-    port: 1234,
+    host: '0.0.0.0',   // required when running inside Docker
+    port: 8080,
     open: true
   },
   build: {

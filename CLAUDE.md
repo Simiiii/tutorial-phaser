@@ -8,22 +8,16 @@ A step-by-step tutorial demonstrating real-time multiplayer with **Phaser** (gam
 
 ## Commands
 
-### Server (`cd server` first)
+### Docker — Production
 ```
-npm start          # Run dev server with hot reload (tsx watch) on ws://localhost:2567
-npm test           # Run mocha test suite
-npm run loadtest   # Load test with 2 simulated clients
-npm run build      # Compile TypeScript to lib/
+docker compose up --build
 ```
 
-### Client (`cd client` first)
+### Docker — Development
 ```
-npm start          # Vite dev server at http://localhost:1234
-npm run build      # Production build to dist/
-npm run preview    # Preview production build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml watch
 ```
-
-Both server and client must run simultaneously during development.
 
 ## Architecture
 

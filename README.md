@@ -6,10 +6,17 @@ Full source-code for the step-by-step tutorial on how to use Phaser + Colyseus t
 - [See step-by-step Tutorial](https://docs.colyseus.io/tutorial/phaser)
 - [See Colyseus documentation](https://docs.colyseus.io/)
 
-## How to run the **docker compose**
+## Production
 
 ```sh
 docker compose up --build
+```
+
+## Development
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml watch
 ```
 
 ## How to run the **server**
@@ -36,7 +43,7 @@ npm install
 npm start
 ```
 
-The client should be accessible at [`http://localhost:1234`](`http://localhost:1234`).
+The client should be accessible at [`http://localhost:8080`](`http://localhost:8080`).
 
 ## License
 

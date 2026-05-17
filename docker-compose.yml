@@ -10,9 +10,9 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:2567/hello"]
-      interval: 30s
+      interval: 3s
       timeout: 5s
-      retries: 3
+      retries: 5
 
   # Phaser client — static files served by nginx
   client:

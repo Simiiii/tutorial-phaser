@@ -1,3 +1,16 @@
+# ── Stage 0: development (hot-reload with tsx watch) ──────────────────────────
+FROM node:lts-alpine AS dev
+WORKDIR /app
+RUN apk add --no-cache git
+COPY package*.json ./
+RUN npm install           # all deps including tsx devDependency
+COPY tsconfig.json ./
+COPY src/ ./src/
+EXPOSE 2567
+# --watch src watches the whole src/ directory, not just statically imported files.
+# app.config.ts is loaded dynamically by @colyseus/tools so tsx needs the explicit flag.
+CMD ["npx", "tsx", "watch", "--watch", "src", "src/index.ts"]
+
 # ── Stage 1: install dependencies ─────────────────────────────────────────────
 FROM node:lts-alpine AS deps
 WORKDIR /app

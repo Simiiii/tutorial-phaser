@@ -1,3 +1,13 @@
+# ── Stage 0: development (Vite HMR dev server) ────────────────────────────────
+FROM node:lts-alpine AS dev
+WORKDIR /app
+RUN apk add --no-cache git
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 8080
+CMD ["npm", "start"]
+
 # ── Stage 1: build the Vite app ───────────────────────────────────────────────
 FROM node:lts-alpine AS builder
 WORKDIR /app
