@@ -57,3 +57,10 @@ This gives end-to-end type safety without a shared package — changes to server
 
 ### Known issue in tests
 `server/test/MyRoom_test.ts` references `../src/arena.config` (old template name) — this import will fail. The actual config file is `src/app.config.ts`.
+
+## Git conventions
+
+Commit messages: single subject line, no body, always end with:
+```
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+```
