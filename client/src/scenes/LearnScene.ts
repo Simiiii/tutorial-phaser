@@ -434,8 +434,6 @@ export class LearnScene extends Phaser.Scene {
       "Super gemacht! Du kennst jetzt die Grundlagen sicherer Passwörter.\nJetzt: sammle alle 26 Buchstaben im Spielfeld!",
       [{ text: "Weiter!", onSelect: () => { this.hideDialog(); this.showMissionIntro(2); } }]
     );
-    // Tint collectibles green to signal they are now active
-    this.collectibles.forEach(c => c.obj.setTint(0x00ff88));
   }
 
   private tryCollect() {
